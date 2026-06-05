@@ -1,13 +1,7 @@
 import type { Handler } from '@netlify/functions'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-})
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 function buildHtml(name: string, email: string, company: string, message: string): string {
   const companyLine = company
@@ -126,8 +120,8 @@ const handler: Handler = async (event) => {
   }
 
   try {
-    await transporter.sendMail({
-      from: `"CoreCodeSolution" <${process.env.GMAIL_USER}>`,
+    await resend.emails.send({
+      from: 'CoreCodeSolution <office@corecodesolution.com>',
       to: 'office@corecodesolution.com',
       replyTo: email,
       subject: `New inquiry from ${name}${company ? ` · ${company}` : ''}`,
