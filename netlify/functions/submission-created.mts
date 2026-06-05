@@ -117,12 +117,11 @@ function buildHtml(name: string, email: string, company: string, message: string
 }
 
 const handler: Handler = async (event) => {
-  const payload = JSON.parse(event.body ?? '{}')
+  const body = JSON.parse(event.body ?? '{}')
 
-  // Netlify Forms sends field values under payload.data for background functions,
-  // but the submission-created sync function receives the submission object directly.
-  // Support both shapes to be safe.
-  const data = payload.data ?? payload
+  // Netlify wraps the submission under body.payload for event-triggered functions.
+  // Form fields live under body.payload.data. Support all shapes defensively.
+  const data = body?.payload?.data ?? body?.data ?? body
 
   const { name, email, company, message } = data as {
     name: string
