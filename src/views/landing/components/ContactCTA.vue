@@ -2,7 +2,7 @@
 import { ref, reactive } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import type { ContactFormData } from '@/types'
-import { Send, CalendarCheck } from '@lucide/vue'
+import { Send, CalendarCheck, AlertCircle } from '@lucide/vue'
 import { useScrollReveal } from '@/composables/useGsapAnimations'
 
 const sectionRef = ref<HTMLElement | null>(null)
@@ -18,13 +18,42 @@ const formData = reactive<ContactFormData>({
 
 const isSubmitting = ref<boolean>(false)
 const isSubmitted = ref<boolean>(false)
+const submitError = ref<string>('')
+
+function encodeFormData(data: Record<string, string>): string {
+  return Object.entries(data)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&')
+}
 
 async function handleSubmit(): Promise<void> {
   isSubmitting.value = true
-  // Simulate async form submission
-  await new Promise<void>((resolve) => setTimeout(resolve, 1200))
-  isSubmitting.value = false
-  isSubmitted.value = true
+  submitError.value = ''
+
+  try {
+    const response = await fetch('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: encodeFormData({
+        'form-name': 'contact',
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        message: formData.message,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}`)
+    }
+
+    isSubmitted.value = true
+  } catch (err) {
+    submitError.value =
+      'Something went wrong sending your message. Please try again or email us directly at office@corecodesolution.com.'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -101,7 +130,21 @@ async function handleSubmit(): Promise<void> {
           </div>
 
           <!-- Form -->
-          <form v-else class="flex flex-col gap-5" @submit.prevent="handleSubmit">
+          <form
+            v-else
+            name="contact"
+            method="POST"
+            data-netlify="true"
+            data-netlify-honeypot="bot-field"
+            class="flex flex-col gap-5"
+            @submit.prevent="handleSubmit"
+          >
+            <!-- Netlify hidden fields -->
+            <input type="hidden" name="form-name" value="contact" />
+            <p class="hidden">
+              <label>Don't fill this out: <input name="bot-field" /></label>
+            </p>
+
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div class="flex flex-col gap-1.5">
                 <label for="name" class="text-sm font-medium text-zinc-300">Full Name</label>
@@ -162,6 +205,15 @@ async function handleSubmit(): Promise<void> {
               <span>{{ isSubmitting ? 'Sending...' : 'Book a Discovery Call' }}</span>
               <Send v-if="!isSubmitting" :size="16" />
             </BaseButton>
+
+            <!-- Error message -->
+            <div
+              v-if="submitError"
+              class="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400"
+            >
+              <AlertCircle :size="16" class="shrink-0 mt-0.5" />
+              <span>{{ submitError }}</span>
+            </div>
 
             <p class="text-center text-xs text-zinc-600">
               No spam. No commitment. Just a conversation.

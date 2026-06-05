@@ -9,6 +9,15 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- Netlify Forms: static form declaration for build-time detection.
+         The actual submission is handled via fetch in ContactCTA.vue. -->
+    <form name="contact" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <input type="text" name="company" />
+      <textarea name="message"></textarea>
+      <input type="text" name="bot-field" />
+    </form>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
