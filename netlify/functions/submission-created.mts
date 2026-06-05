@@ -117,7 +117,9 @@ function buildHtml(name: string, email: string, company: string, message: string
 }
 
 const handler: Handler = async (event) => {
-  const body = JSON.parse(event.body ?? '{}')
+  if (!event.body) return { statusCode: 400, body: 'Empty payload' }
+
+  const body = JSON.parse(event.body)
 
   // Netlify wraps the submission under body.payload for event-triggered functions.
   // Form fields live under body.payload.data. Support all shapes defensively.
